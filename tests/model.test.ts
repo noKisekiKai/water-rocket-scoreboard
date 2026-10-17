@@ -1,0 +1,16 @@
+import { strict as assert } from 'node:assert';
+import { rankGroups, csvCell, type RecordItem } from '../lib/model.ts';
+const g=(n:number):RecordItem=>({id:'g'+n,kind:'group',version:1,updatedAt:1,data:{number:n,school:'測試學校'}});
+const a=(n:number,hit:boolean,score:number|null,distance:number|null):RecordItem=>({id:crypto.randomUUID(),kind:'attempt',version:1,updatedAt:1,data:{groupId:'g'+n,hit,score,distance}});
+const rows=[g(1),g(2),g(3),g(4),a(1,true,null,null),a(2,false,100,0),a(3,true,0,0)];
+assert.equal(rankGroups(rows)[0].id,'g3');
+assert.equal(rankGroups(rows,'score')[0].id,'g2');
+assert.equal(rankGroups(rows,'distance')[0].id,'g3');
+assert.equal(rankGroups(rows).find(r=>r.id==='g4')?.rank,0);
+assert.equal(rankGroups(rows).find(r=>r.id==='g1')?.score,null);
+assert.equal(rankGroups(rows).find(r=>r.id==='g3')?.score,0);
+const tied=rankGroups([g(1),g(2),g(3),a(1,true,5,1),a(2,true,5,1),a(3,false,5,1)]);
+assert.deepEqual(tied.map(r=>r.rank),[1,1,3]);
+assert.equal(csvCell('=1+2'),'"\'=1+2"');
+assert.equal(csvCell('a"b'),'"a""b"');
+console.log('PASS: ranking, missing vs zero, ties, unrecorded groups, CSV injection protection');
